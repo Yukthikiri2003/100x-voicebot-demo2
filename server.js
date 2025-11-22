@@ -1,46 +1,39 @@
 // server.js
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { OpenAI } from 'openai';
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const OpenAI = require("openai");
 
 const app = express();
-app.use(express.json());
-app.use(cors());
+app.use(cors()); // VERY IMPORTANT for frontend to connect!
+app.use(bodyParser.json());
 
-// Get the directory name (needed for deployment)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Serve the frontend
-app.use(express.static(path.join(__dirname, 'public')));
-
-// OPENAI SETUP — READ API KEY FROM RENDER ENV VARIABLE
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY // <--- REQUIRED FOR RENDER DEPLOYMENT
+// TEST ROUTE
+app.get("/", (req, res) => {
+  res.send("VoiceBot API is working!");
 });
 
-// API Endpoint
-app.post('/api/ask', async (req, res) => {
+// MAIN ENDPOINT
+app.post("/api/ask", async (req, res) => {
   try {
-    const { message } = req.body;
+    const userMessage = req.body.message;
 
-    const response = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        { role: "system", content: "You are Yuktha K Iyer answering interview questions clearly and confidently. Keep your replies short and meaningful." },
-        { role: "user", content: message }
+        { role: "system", content: "You are Yuktha, answering interview questions." },
+        { role: "user", content: userMessage }
       ],
     });
 
-    res.json({ reply: response.choices[0].message.content });
+    res.json({ reply: completion.choices[0].message.content });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error generating response" });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Use Render’s PORT or default to 5000 locally
-const PORT = process.env.PORT || 5000;
+// DEPLOY ON RENDER
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
