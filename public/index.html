@@ -4,70 +4,46 @@
   <meta charset="UTF-8" />
   <title>100x Voice Interview Bot</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 50px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 18px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    .text-box {
-      margin-top: 20px;
-      font-size: 18px;
-    }
-    h1 {
-      color: #1e90ff;
-    }
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    button { padding: 15px 25px; font-size: 18px; cursor: pointer; }
   </style>
 </head>
 <body>
-  <h1>🎙 100x Voice Interview Bot</h1>
-  <p>Click the button and speak your interview question.</p>
-  <button id="start">🎤 Speak</button>
 
-  <div class="text-box">
-    <p><b>You said:</b> <span id="userText">...</span></p>
-    <p><b>Bot says:</b> <span id="botReply">...</span></p>
-  </div>
+  <h1>🎤 100x Voice Interview Bot</h1>
+  <p>Click the button and ask your interview question.</p>
+
+  <button onclick="startRecording()">🎙️ Speak</button>
+
+  <p><b>You said:</b> <span id="userText"></span></p>
+  <p><b>Bot says:</b> <span id="botReply"></span></p>
 
   <script>
-    const startBtn = document.getElementById("start");
-    const userText = document.getElementById("userText");
-    const botReply = document.getElementById("botReply");
-
-    // Speech Recognition (Browser API)
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-
-    // Start listening when button clicked
-    startBtn.onclick = () => {
+    async function startRecording() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
       recognition.start();
-    };
 
-    // When voice detected
-    recognition.onresult = async (event) => {
-      const message = event.results[0][0].transcript;  
-      userText.textContent = message;
+      recognition.onresult = async function (event) {
+        const message = event.results[0][0].transcript;
+        document.getElementById("userText").innerText = message;
 
-      // Send message to backend (Render server)
-      const response = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message })
-      });
+        // 🔴 IMPORTANT: CHANGE THIS TO YOUR RENDER BACKEND URL
+        const response = await fetch("YOUR_BACKEND_URL_HERE/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
 
-      const data = await response.json();
-      botReply.textContent = data.reply;
+        const data = await response.json();
+        document.getElementById("botReply").innerText = data.reply;
 
-      // Speak the reply aloud
-      const speech = new SpeechSynthesisUtterance(data.reply);
-      speechSynthesis.speak(speech);
-    };
+        // Text-to-speech response
+        const speech = new SpeechSynthesisUtterance(data.reply);
+        window.speechSynthesis.speak(speech);
+      };
+    }
   </script>
+
 </body>
 </html>
