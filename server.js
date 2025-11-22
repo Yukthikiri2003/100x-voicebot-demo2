@@ -1,21 +1,24 @@
-// server.js
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const OpenAI = require("openai");
+// server.js (ESM Version – works with "type": "module")
+
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import OpenAI from "openai";
 
 const app = express();
-app.use(cors()); // VERY IMPORTANT for frontend to connect!
+app.use(cors());
 app.use(bodyParser.json());
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
-// TEST ROUTE
+// Test route
 app.get("/", (req, res) => {
   res.send("VoiceBot API is working!");
 });
 
-// MAIN ENDPOINT
+// Your API for the frontend
 app.post("/api/ask", async (req, res) => {
   try {
     const userMessage = req.body.message;
@@ -23,9 +26,9 @@ app.post("/api/ask", async (req, res) => {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        { role: "system", content: "You are Yuktha, answering interview questions." },
+        { role: "system", content: "You are Yuktha answering interview questions." },
         { role: "user", content: userMessage }
-      ],
+      ]
     });
 
     res.json({ reply: completion.choices[0].message.content });
@@ -34,6 +37,6 @@ app.post("/api/ask", async (req, res) => {
   }
 });
 
-// DEPLOY ON RENDER
+// For Render Deployment
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
